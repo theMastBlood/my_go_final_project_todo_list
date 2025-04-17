@@ -14,10 +14,10 @@ const (
 	schema = `
 	CREATE TABLE scheduler (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		date INTEGER NOT NULL,
-		title VARCHAR(255) NOT NULL,
+		date CHAR(8) NOT NULL DEFAULT,
+		title TEXT NOT NULL DEFAULT,
 		comment TEXT,
-		repeat VARCHAR(128)
+		repeat VARCHAR(128) NOT NULL DEFAULT
 	);
 	
 	CREATE INDEX idx_date ON scheduler(date);

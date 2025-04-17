@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/theMastBlood/my_go_final_project_todo_list/pkg/api"
 )
 
 const (
@@ -13,6 +15,9 @@ const (
 )
 
 func StartServer() {
+
+	api.Init()
+
 	port := os.Getenv("TODO_PORT")
 	if port == "" {
 		port = defaultPort
