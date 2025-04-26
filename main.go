@@ -11,7 +11,7 @@ func main() {
 
 	err := db.Init("scheduler.db")
 	if err != nil {
-		log.Fatalf("Ошибка инициализации базы данных: %v", err)
+		log.Fatalf("ошибка инициализации базы данных: %v", err)
 	}
 
 	server.StartServer()

@@ -10,56 +10,63 @@ import (
 
 const dateFormat = "20060102"
 
+func afterNow(date, now time.Time) bool {
+	return date.After(now)
+}
+
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 
 	if repeat == "" {
-		return "", fmt.Errorf("Повтор не задан")
+		return "", fmt.Errorf("повтор не задан")
 	}
 
 	date, err := time.Parse(dateFormat, dstart)
 	if err != nil {
-		return "", fmt.Errorf("Неверный формат даты: %s", dstart)
+		return "", fmt.Errorf("неверный формат даты: %s", dstart)
 	}
 
-	switch repeat[0] {
+	parts := strings.Split(repeat, " ")
 
-	case 'd':
-		parts := strings.Split(repeat, " ")
+	switch parts[0] {
+	case "d":
 		if len(parts) != 2 {
-			return "", fmt.Errorf("Неверный формат даты: %s", repeat)
+			return "", fmt.Errorf("неверный формат даты: %s", repeat)
 		}
 		interval, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return "", fmt.Errorf("Неверный формат даты: %s", repeat)
+			return "", fmt.Errorf("неверный формат даты: %s", repeat)
 		} else if interval < 1 || interval > 400 {
-			return "", fmt.Errorf("Задан недопустимый интервал повторения: %s", interval)
+			return "", fmt.Errorf("задан недопустимый интервал повторения: %d", interval)
 		}
-		nextDate := date.AddDate(0, 0, interval)
-		for !nextDate.After(now) {
-			nextDate = nextDate.AddDate(0, 0, interval)
-		}
-		return nextDate.Format(dateFormat), nil
 
-	case 'y':
-		nextDate := date.AddDate(1, 0, 0)
-		for !nextDate.After(now) {
-			nextDate = nextDate.AddDate(1, 0, 0)
+		for {
+			date = date.AddDate(0, 0, interval)
+			if afterNow(date, now) {
+				return date.Format(dateFormat), nil
+			}
 		}
-		return nextDate.Format(dateFormat), nil
+
+	case "y":
+		for {
+			date = date.AddDate(1, 0, 0)
+			if afterNow(date, now) {
+				return date.Format(dateFormat), nil
+			}
+		}
 
 	default:
-		return "", fmt.Errorf("Неподдерживаемый формат даты: %s", repeat)
+		return "", fmt.Errorf("неподдерживаемый формат даты: %s", repeat)
 	}
 }
 
-func NextDateHandler(w http.ResponseWriter, r *http.Request) {
+func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 	now := r.FormValue("now")
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 
 	nowFormat, err := time.Parse(dateFormat, now)
 	if err != nil {
-		http.Error(w, "Неверный формат даты", http.StatusBadRequest)
+		http.Error(w, "неверный формат даты", http.StatusBadRequest)
 		return
 	}
 
