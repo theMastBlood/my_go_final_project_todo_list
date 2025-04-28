@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,10 +8,7 @@ import (
 	"github.com/theMastBlood/my_go_final_project_todo_list/pkg/api"
 )
 
-const (
-	defaultPort = "7540"
-	webDir      = "./web"
-)
+const defaultPort = "7540"
 
 func StartServer() {
 
@@ -23,15 +19,13 @@ func StartServer() {
 		port = defaultPort
 	}
 
-	http.Handle("/", http.FileServer(http.Dir(webDir)))
-
 	go func() {
 		if err := http.ListenAndServe(":"+port, nil); err != nil {
-			log.Fatalf("ошибка запуска сервера: %v\n", err)
+			log.Fatalf("server starting error: %v\n", err)
 		}
 	}()
 
-	fmt.Println("Сервер запущен на порте: " + port)
+	log.Printf("Сервер запущен на порте: " + port)
 
 	select {}
 }

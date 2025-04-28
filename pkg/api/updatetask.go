@@ -12,15 +12,20 @@ import (
 )
 
 func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "method not supported", http.StatusMethodNotAllowed)
+		return
+	}
+
 	var task db.Task
 
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		writeJson(w, map[string]string{"error": "ошибка десериализации JSON"}, http.StatusBadRequest)
+		writeJson(w, map[string]string{"error": "JSON deserialization error"}, http.StatusBadRequest)
 		return
 	}
 
 	if task.ID == "" {
-		writeJson(w, map[string]string{"error": "не указан идентификатор задачи"}, http.StatusBadRequest)
+		writeJson(w, map[string]string{"error": "task ID not specified"}, http.StatusBadRequest)
 		return
 	}
 
@@ -41,29 +46,29 @@ func validateTask(task *db.Task) error {
 	now := time.Now()
 
 	if task.Date == "" {
-		return fmt.Errorf("не указана дата")
+		return fmt.Errorf("no date specified")
 	}
 
 	t, err := time.Parse(dateFormat, task.Date)
 	if err != nil {
-		return fmt.Errorf("дата представлена в неправильном формате, ожидается: %s", dateFormat)
+		return fmt.Errorf("date is not in the correct format, expected: %s", dateFormat)
 	}
 
 	if t.Before(now) {
-		return fmt.Errorf("дата не может быть раньше текущей")
+		return fmt.Errorf("date cannot be earlier than current")
 	}
 
 	if task.Repeat != "" {
 		parts := strings.Split(task.Repeat, " ")
 		if parts[0] == "d" {
 			if len(parts) != 2 {
-				return fmt.Errorf("неверный формат даты: %s", task.Repeat)
+				return fmt.Errorf("invalid date format: %s", task.Repeat)
 			}
 			interval, err := strconv.Atoi(parts[1])
 			if err != nil {
-				return fmt.Errorf("неверный формат даты: %s", task.Repeat)
+				return fmt.Errorf("invalid date format: %s", task.Repeat)
 			} else if interval < 1 || interval > 400 {
-				return fmt.Errorf("задан недопустимый интервал повторения: %d", interval)
+				return fmt.Errorf("invalid repeat interval specified: %d", interval)
 			}
 		}
 	}

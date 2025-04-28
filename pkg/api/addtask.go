@@ -12,22 +12,27 @@ import (
 )
 
 func addTaskHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not supported", http.StatusMethodNotAllowed)
+		return
+	}
+
 	var task db.Task
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "ошибка чтения тела запроса"}, http.StatusBadRequest)
+		writeJson(w, map[string]string{"error": "error reading request body"}, http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
 	if err := json.Unmarshal(body, &task); err != nil {
-		writeJson(w, map[string]string{"error": "ошибка десериализации JSON"}, http.StatusBadRequest)
+		writeJson(w, map[string]string{"error": "JSON deserialization error"}, http.StatusBadRequest)
 		return
 	}
 
 	if task.Title == "" {
-		writeJson(w, map[string]string{"error": "не указан заголовок задачи"}, http.StatusBadRequest)
+		writeJson(w, map[string]string{"error": "task title not specified"}, http.StatusBadRequest)
 		return
 	}
 
@@ -38,7 +43,7 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := db.AddTask(&task)
 	if err != nil {
-		writeJson(w, map[string]string{"error": "ошибка при добавлении задачи в базу данных"}, http.StatusInternalServerError)
+		writeJson(w, map[string]string{"error": "error adding task to database"}, http.StatusInternalServerError)
 		return
 	}
 
@@ -54,7 +59,7 @@ func checkDate(task *db.Task) error {
 
 	t, err := time.Parse(dateFormat, task.Date)
 	if err != nil {
-		return fmt.Errorf("дата представлена в неправильном формате, ожидается: %s", dateFormat)
+		return fmt.Errorf("date is not in the correct format, expected: %s", dateFormat)
 	}
 
 	var next string
@@ -82,11 +87,11 @@ func writeJson(w http.ResponseWriter, data any, status int) {
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		http.Error(w, "ошибка при сериализации данных", http.StatusInternalServerError)
+		http.Error(w, "error while serializing data", http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(jsonData)
 	if err != nil {
-		http.Error(w, "ошибка при отправке ответа", http.StatusInternalServerError)
+		http.Error(w, "error sending response", http.StatusInternalServerError)
 	}
 }

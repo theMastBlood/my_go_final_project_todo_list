@@ -17,12 +17,12 @@ func afterNow(date, now time.Time) bool {
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 
 	if repeat == "" {
-		return "", fmt.Errorf("повтор не задан")
+		return "", fmt.Errorf("repeat not found")
 	}
 
 	date, err := time.Parse(dateFormat, dstart)
 	if err != nil {
-		return "", fmt.Errorf("неверный формат даты: %s", dstart)
+		return "", fmt.Errorf("invalid date format: %s", dstart)
 	}
 
 	parts := strings.Split(repeat, " ")
@@ -30,13 +30,13 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	switch parts[0] {
 	case "d":
 		if len(parts) != 2 {
-			return "", fmt.Errorf("неверный формат даты: %s", repeat)
+			return "", fmt.Errorf("invalid date format: %s", repeat)
 		}
 		interval, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return "", fmt.Errorf("неверный формат даты: %s", repeat)
+			return "", fmt.Errorf("invalid date format: %s", repeat)
 		} else if interval < 1 || interval > 400 {
-			return "", fmt.Errorf("задан недопустимый интервал повторения: %d", interval)
+			return "", fmt.Errorf("invalid repeat interval specified: %d", interval)
 		}
 
 		for {
@@ -55,18 +55,22 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		}
 
 	default:
-		return "", fmt.Errorf("неподдерживаемый формат даты: %s", repeat)
+		return "", fmt.Errorf("unsupported date format: %s", repeat)
 	}
 }
 
 func nextDateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not supported", http.StatusMethodNotAllowed)
+		return
+	}
 	now := r.FormValue("now")
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
 
 	nowFormat, err := time.Parse(dateFormat, now)
 	if err != nil {
-		http.Error(w, "неверный формат даты", http.StatusBadRequest)
+		http.Error(w, "invalid date format", http.StatusBadRequest)
 		return
 	}
 
