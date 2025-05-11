@@ -8,11 +8,6 @@ import (
 
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodDelete {
-		http.Error(w, "method not supported", http.StatusMethodNotAllowed)
-		return
-	}
-
 	id := r.URL.Query().Get("id")
 
 	if id == "" {

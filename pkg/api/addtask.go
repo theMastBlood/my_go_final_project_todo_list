@@ -12,13 +12,8 @@ import (
 )
 
 func addTaskHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not supported", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var task db.Task
-
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		writeJson(w, map[string]string{"error": "error reading request body"}, http.StatusBadRequest)
@@ -52,9 +47,9 @@ func addTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func checkDate(task *db.Task) error {
 	now := time.Now()
-
 	if task.Date == "" {
 		task.Date = now.Format(dateFormat)
+		return nil
 	}
 
 	t, err := time.Parse(dateFormat, task.Date)
@@ -62,20 +57,12 @@ func checkDate(task *db.Task) error {
 		return fmt.Errorf("date is not in the correct format, expected: %s", dateFormat)
 	}
 
-	var next string
-	if task.Repeat != "" {
-		next, err = NextDate(now, task.Date, task.Repeat)
-		if err != nil {
-			return err
-		}
+	if t.Before(now.Truncate(24 * time.Hour)) {
+		task.Date = now.Format(dateFormat)
 	}
 
-	if afterNow(now, t) {
-		if task.Repeat == "" {
-			task.Date = now.Format(dateFormat)
-		} else {
-			task.Date = next
-		}
+	if err := validateTask(task); err != nil {
+		return err
 	}
 
 	return nil
@@ -84,7 +71,6 @@ func checkDate(task *db.Task) error {
 func writeJson(w http.ResponseWriter, data any, status int) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(status)
-
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		http.Error(w, "error while serializing data", http.StatusInternalServerError)

@@ -11,11 +11,10 @@ import (
 const dateFormat = "20060102"
 
 func afterNow(date, now time.Time) bool {
-	return date.After(now)
+	return date.Truncate(24 * time.Hour).After(now.Truncate(24 * time.Hour))
 }
 
 func NextDate(now time.Time, dstart string, repeat string) (string, error) {
-
 	if repeat == "" {
 		return "", fmt.Errorf("repeat not found")
 	}
@@ -26,7 +25,6 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	}
 
 	parts := strings.Split(repeat, " ")
-
 	switch parts[0] {
 	case "d":
 		if len(parts) != 2 {
@@ -45,7 +43,6 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 				return date.Format(dateFormat), nil
 			}
 		}
-
 	case "y":
 		for {
 			date = date.AddDate(1, 0, 0)
@@ -53,7 +50,6 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 				return date.Format(dateFormat), nil
 			}
 		}
-
 	default:
 		return "", fmt.Errorf("unsupported date format: %s", repeat)
 	}
@@ -64,6 +60,7 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not supported", http.StatusMethodNotAllowed)
 		return
 	}
+
 	now := r.FormValue("now")
 	date := r.FormValue("date")
 	repeat := r.FormValue("repeat")
